@@ -1,0 +1,163 @@
+VERİTABANINI KURUDUKTAN SONRA:
+
+...................................1......................................
+
+SELECT *
+FROM Sales.SalesOrderHeader soh
+JOIN Sales.SalesOrderDetail sod ON soh.SalesOrderID = sod.SalesOrderID
+WHERE YEAR(soh.OrderDate) = 2012;
+
+
+
+
+
+
+
+
+
+
+
+...................................2......................................
+
+SELECT TOP 5
+    qs.total_elapsed_time / qs.execution_count AS AvgElapsedTimeMs,
+    qs.execution_count,
+    qt.text AS QueryText
+FROM sys.dm_exec_query_stats qs
+CROSS APPLY sys.dm_exec_sql_text(qs.sql_handle) qt
+ORDER BY AvgElapsedTimeMs DESC;
+
+
+
+
+
+
+
+
+
+...................................3......................................
+
+SELECT TOP 5
+    migs.avg_total_user_cost AS Cost,
+    migs.avg_user_impact AS Impact,
+    mid.statement AS TableName,
+    mid.equality_columns,
+    mid.inequality_columns,
+    mid.included_columns
+FROM sys.dm_db_missing_index_groups mig
+JOIN sys.dm_db_missing_index_group_stats migs ON migs.group_handle = mig.index_group_handle
+JOIN sys.dm_db_missing_index_details mid ON mig.index_handle = mid.index_handle
+ORDER BY migs.avg_user_impact DESC;
+
+
+
+
+
+
+
+
+
+...................................4......................................
+CREATE NONCLUSTERED INDEX IX_Customer_AccountNumber
+ON Sales.Customer(AccountNumber);
+
+
+
+
+
+
+
+
+
+
+
+
+...................................5......................................
+
+SELECT OBJECT_NAME(i.object_id) AS TableName,
+       i.name AS IndexName,
+       s.user_seeks, s.user_scans, s.user_lookups, s.user_updates
+FROM sys.indexes AS i
+JOIN sys.dm_db_index_usage_stats AS s
+    ON i.object_id = s.object_id AND i.index_id = s.index_id
+WHERE s.user_seeks = 0 AND s.user_scans = 0 AND s.user_lookups = 0
+  AND OBJECTPROPERTY(i.object_id,'IsUserTable') = 1;
+
+
+
+
+
+
+
+
+
+
+...................................6......................................
+
+SELECT *
+FROM Sales.SalesOrderHeader
+WHERE YEAR(OrderDate) = 2011;
+
+
+
+
+
+
+
+
+
+
+
+...................................7.....................................
+
+SELECT SalesOrderID, OrderDate, CustomerID
+FROM Sales.SalesOrderHeader
+WHERE OrderDate BETWEEN '2011-01-01' AND '2011-12-31';
+
+
+
+
+
+
+
+
+
+
+...................................8......................................
+CREATE LOGIN demo_user WITH PASSWORD = 'Demo123!';
+CREATE USER demo_user FOR LOGIN demo_user;
+
+
+
+
+
+
+
+
+
+
+...................................9......................................
+GRANT SELECT ON Sales.SalesOrderHeader TO demo_user;
+
+
+
+
+
+
+
+
+
+
+...................................10......................................
+
+REVOKE SELECT ON Sales.SalesOrderHeader FROM demo_user;
+
+
+
+
+
+
+
+
+
+

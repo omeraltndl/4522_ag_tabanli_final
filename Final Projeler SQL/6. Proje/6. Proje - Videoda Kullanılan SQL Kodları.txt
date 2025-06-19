@@ -1,0 +1,198 @@
+..............................1...............................
+BACKUP DATABASE AdventureWorks2022 TO DISK = 'C:\Backup\AdventureWorks2022.bak';
+
+
+
+
+
+
+
+
+
+
+
+
+..............................2...............................
+
+SELECT @@VERSION;
+
+
+
+
+
+
+
+
+
+
+
+
+..............................3...............................
+USE AdventureWorks2022;
+GO
+
+CREATE TABLE SchemaChangeLog (
+    EventType NVARCHAR(100),
+    ObjectName NVARCHAR(100),
+    CommandText NVARCHAR(MAX),
+    EventTime DATETIME DEFAULT GETDATE()
+);
+
+GO
+
+CREATE TRIGGER trg_SchemaChangeLog
+ON DATABASE
+FOR CREATE_TABLE, ALTER_TABLE, DROP_TABLE
+AS
+BEGIN
+    INSERT INTO SchemaChangeLog (EventType, ObjectName, CommandText)
+    SELECT EVENTDATA().value('(/EVENT_INSTANCE/EventType)[1]', 'NVARCHAR(100)'),
+           EVENTDATA().value('(/EVENT_INSTANCE/ObjectName)[1]', 'NVARCHAR(100)'),
+           EVENTDATA().value('(/EVENT_INSTANCE/TSQLCommand/CommandText)[1]', 'NVARCHAR(MAX)');
+END;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+..............................4...............................
+
+ALTER TABLE Person.Person ADD MiddleInitial CHAR(1);
+
+
+
+
+
+
+
+
+
+
+
+
+
+..............................5...............................
+SELECT * FROM SchemaChangeLog;
+
+
+
+
+
+
+
+
+
+
+
+
+..............................6...............................
+SELECT COUNT(*) FROM Person.Person;
+
+
+
+
+
+
+
+
+
+
+
+
+
+..............................7...............................
+
+USE master;
+GO
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+..............................8...............................
+
+ALTER DATABASE AdventureWorks2022
+SET SINGLE_USER
+WITH ROLLBACK IMMEDIATE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+..............................9...............................
+
+RESTORE DATABASE AdventureWorks2022
+FROM DISK = 'C:\Backup\AdventureWorks2022.bak'
+WITH REPLACE;
+
+
+
+
+
+
+
+
+
+
+
+..............................10...............................
+ALTER DATABASE AdventureWorks2022
+SET MULTI_USER;
+
+
+
+
+
+
+
+
+
+
+
+
+
+..............................11...............................
+RESTORE DATABASE AdventureWorks2022
+FROM DISK = 'C:\Backup\AdventureWorks2022.bak'
+WITH REPLACE;
+
+
+
+
+
+
+
+
+
+
+
+
+
+

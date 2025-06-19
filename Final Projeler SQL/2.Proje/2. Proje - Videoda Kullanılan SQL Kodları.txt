@@ -1,0 +1,79 @@
+--------------------- A1. Veritabanını oluştur -------------------
+
+CREATE DATABASE CompanyBackupTest3;
+GO
+
+--------------------- A2. Kullan -------------------
+
+USE CompanyBackupTest3;
+GO
+
+--------------------- A3. Tablo oluştur -------------------
+
+CREATE TABLE Employees (
+    ID INT IDENTITY PRIMARY KEY,
+    FullName NVARCHAR(100),
+    Email NVARCHAR(100)
+);
+GO
+
+--------------------- A4. İlk veri ekle -------------------
+
+INSERT INTO Employees (FullName, Email)
+VALUES 
+    ('Ali Veli', 'ali@example.com'),
+    ('Ayşe Fatma', 'ayse@example.com');
+GO
+
+--------------------- A5. Recovery model FULL yap -------------------
+
+ALTER DATABASE CompanyBackupTest3 SET RECOVERY FULL;
+GO
+
+--------------------- A6. FULL BACKUP al -------------------
+
+BACKUP DATABASE CompanyBackupTest3
+TO DISK = 'C:\Backup\CBT3_FULL.bak'
+WITH INIT;
+GO
+
+--------------------- A7. Yeni veriler ekle -------------------
+
+INSERT INTO Employees (FullName, Email)
+VALUES 
+    ('Zeynep Yılmaz', 'zeynep@example.com'),
+    ('Mehmet Karaca', 'mehmet@example.com');
+GO
+
+--------------------- A8. LOG BACKUP al -------------------
+
+BACKUP LOG CompanyBackupTest3
+TO DISK = 'C:\Backup\CBT3_LOG.trn';
+GO
+
+
+--------------------- B1. Sil (felaket senaryosu) -------------------
+
+USE master;
+GO
+DROP DATABASE CompanyBackupTest3;
+GO
+
+--------------------- B2. FULL yedeği geri yükle -------------------
+
+RESTORE DATABASE CompanyBackupTest3
+FROM DISK = 'C:\Backup\CBT3_FULL.bak'
+WITH NORECOVERY, REPLACE;
+GO
+
+--------------------- B3. LOG yedeğini geri yükle -------------------
+
+RESTORE LOG CompanyBackupTest3
+FROM DISK = 'C:\Backup\CBT3_LOG.trn'
+WITH RECOVERY;
+GO
+
+--------------------- B4. Kontrol -------------------
+
+USE CompanyBackupTest3;
+SELECT * FROM Employees;

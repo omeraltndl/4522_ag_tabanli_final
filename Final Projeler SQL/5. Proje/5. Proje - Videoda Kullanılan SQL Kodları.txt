@@ -1,0 +1,77 @@
+-- 1. Veritabanını oluştur
+CREATE DATABASE ETLProject;
+GO
+
+-- 2. Veritabanını kullan
+USE ETLProject;
+GO
+
+-- 3. Staging tablosunu oluştur
+CREATE TABLE Staging_Customers (
+    ID INT,
+    FullName NVARCHAR(100),
+    Email NVARCHAR(100),
+    BirthDate NVARCHAR(50)
+);
+GO
+
+-- 4. Kirli verileri ekle
+INSERT INTO Staging_Customers VALUES
+(1, 'Ali Veli', 'ali@gmail.com', '1990-01-15'),
+(2, 'Ayşe Fatma', 'ayse@@mailcom', 'not-a-date'),
+(3, NULL, 'mehmet@example.com', '1985-09-30'),
+(4, 'Zeynep G.', '', '2001/12/05'),
+(5, 'Can Demir', 'can.mail.com', '2002-03-01');
+GO
+
+-- 5. Geçersiz e-posta kontrolü
+SELECT * FROM Staging_Customers
+WHERE Email NOT LIKE '%_@__%.__%';
+GO
+
+-- 6. Geçersiz doğum tarihi kontrolü
+SELECT * FROM Staging_Customers
+WHERE ISDATE(BirthDate) = 0;
+GO
+
+-- 7. Temiz kayıtları Clean tablosuna aktarma
+SELECT ID, FullName, Email, CAST(BirthDate AS DATE) AS BirthDate
+INTO Clean_Customers
+FROM Staging_Customers
+WHERE 
+    FullName IS NOT NULL
+    AND Email LIKE '%_@__%.__%'
+    AND ISDATE(BirthDate) = 1;
+GO
+
+-- 8. Final (hedef) tablosunu oluştur
+CREATE TABLE Final_Customers (
+    ID INT PRIMARY KEY,
+    FullName NVARCHAR(100),
+    Email NVARCHAR(100),
+    BirthDate DATE
+);
+GO
+
+-- 9. Clean tablosundan final tabloya veri yükle
+INSERT INTO Final_Customers (ID, FullName, Email, BirthDate)
+SELECT ID, FullName, Email, BirthDate
+FROM Clean_Customers;
+GO
+
+-- 10. Veri kalitesi raporu
+
+-- Toplam kayıt
+SELECT COUNT(*) AS TotalRecords FROM Staging_Customers;
+
+-- Geçersiz e-posta sayısı
+SELECT COUNT(*) AS InvalidEmails FROM Staging_Customers
+WHERE Email NOT LIKE '%_@__%.__%';
+
+-- Geçersiz doğum tarihi sayısı
+SELECT COUNT(*) AS InvalidBirthDates FROM Staging_Customers
+WHERE ISDATE(BirthDate) = 0;
+
+-- Temizlenen kayıt sayısı
+SELECT COUNT(*) AS CleanedRecords FROM Final_Customers;
+GO
